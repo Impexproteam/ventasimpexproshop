@@ -1,0 +1,1502 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sellers Intelligence · MercadoLibre Q1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#f2f3f5; --bg2:#fff; --bg3:#eaecf0;
+  --navy:#1e2e45; --navy2:#162236; --navy3:#304a6f;
+  --gold:#c9b800; --gold-lt:rgba(201,184,0,.12);
+  --teal:#0092a8; --teal-lt:rgba(0,146,168,.12);
+  --success:#16a34a; --success-lt:rgba(22,163,74,.1);
+  --danger:#dc2626; --danger-lt:rgba(220,38,38,.1);
+  --warning:#d97706; --warning-lt:rgba(217,119,6,.1);
+  --text:#111827; --text2:#4b5563; --text3:#9ca3af;
+  --border:#e5e7eb; --border2:#d1d5db;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 15px rgba(0,0,0,.08),0 4px 6px rgba(0,0,0,.05);
+  --r:10px; --r-sm:7px;
+  --header-h:60px;
+  --panel-w:300px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── LOGIN ── */
+#login-screen{position:fixed;inset:0;z-index:9999;background:var(--navy);display:flex;align-items:center;justify-content:center}
+#login-box{background:#fff;border-radius:18px;padding:40px 36px;width:100%;max-width:360px;box-shadow:0 24px 64px rgba(0,0,0,.4);text-align:center}
+.login-logo{width:62px;height:62px;background:var(--navy);border-radius:16px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;color:#fff;letter-spacing:.04em;flex-direction:column;line-height:1.1}
+.login-logo span{font-size:10px;font-weight:600;color:var(--gold);letter-spacing:.12em;text-transform:uppercase}
+#login-title{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:900;color:var(--text);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+#login-sub{font-size:12px;color:var(--text3);font-weight:500;margin-bottom:28px}
+#login-input{width:100%;border:2px solid var(--border2);border-radius:10px;padding:13px 16px;font-size:22px;font-family:'Barlow Condensed',monospace;font-weight:700;letter-spacing:.2em;text-align:center;outline:none;color:var(--text);background:var(--bg);transition:border-color .2s}
+#login-input:focus{border-color:var(--navy3)}
+#login-btn{margin-top:16px;width:100%;background:var(--navy);color:#fff;border:none;border-radius:10px;padding:13px;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .2s}
+#login-btn:hover{background:var(--navy3)}
+#login-err{color:var(--danger);font-size:12px;font-weight:600;margin-top:10px;min-height:18px}
+
+/* ── UPLOAD ── */
+#upload-box{background:#fff;border-radius:18px;padding:48px;width:100%;max-width:480px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.4)}
+.upload-icon{font-size:52px;margin-bottom:18px}
+#upload-box h2{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--text);margin-bottom:8px}
+#upload-box p{font-size:13px;color:var(--text2);margin-bottom:28px;line-height:1.5}
+#dropzone{border:2px dashed var(--border2);border-radius:12px;padding:36px 24px;cursor:pointer;transition:all .2s;background:var(--bg)}
+#dropzone:hover,#dropzone.drag-over{border-color:var(--navy3);background:rgba(48,74,111,.05)}
+#dropzone p{font-size:13px;color:var(--text2);margin-bottom:12px}
+#file-input{display:none}
+.upload-btn{display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:#fff;border:none;border-radius:9px;padding:11px 22px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:background .2s}
+.upload-btn:hover{background:var(--navy3)}
+#upload-progress{margin-top:20px;display:none}
+.prog-bar{height:6px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:8px}
+.prog-fill{height:100%;background:var(--navy3);border-radius:4px;width:0%;transition:width .3s}
+#upload-msg{font-size:12px;color:var(--text2);font-weight:600}
+
+/* ── MAIN APP ── */
+#app{display:none;min-height:100vh;background:var(--bg)}
+
+/* Header */
+#hdr{position:sticky;top:0;z-index:200;height:var(--header-h);background:var(--navy);display:flex;align-items:center;gap:16px;padding:0 20px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.hdr-logo{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;color:#fff;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;display:flex;align-items:center;gap:10px}
+.hdr-logo-badge{background:var(--gold);color:var(--navy);font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;letter-spacing:.1em}
+.hdr-file{font-size:11px;color:rgba(255,255,255,.5);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.hdr-space{flex:1}
+#btn-open-panel{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:8px 14px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:background .2s}
+#btn-open-panel:hover{background:rgba(255,255,255,.18)}
+#sel-count-badge{background:var(--gold);color:var(--navy);border-radius:50%;width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
+#btn-logout{background:transparent;border:none;color:rgba(255,255,255,.45);font-size:11px;font-weight:600;cursor:pointer;padding:6px 10px;border-radius:6px;transition:color .2s}
+#btn-logout:hover{color:rgba(255,255,255,.8)}
+
+/* ── PANEL LATERAL (seller picker) ── */
+#panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:none;opacity:0;transition:opacity .25s}
+#panel-overlay.open{display:block;opacity:1}
+#seller-panel{position:fixed;top:0;right:0;width:var(--panel-w);height:100vh;background:#fff;z-index:400;transform:translateX(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.18)}
+#seller-panel.open{transform:translateX(0)}
+.sp-header{background:var(--navy);padding:18px 20px;display:flex;align-items:center;gap:12px}
+.sp-title{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:.04em;flex:1}
+.sp-close{background:rgba(255,255,255,.12);border:none;color:#fff;width:32px;height:32px;border-radius:7px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.sp-close:hover{background:rgba(255,255,255,.22)}
+.sp-search{padding:14px 16px;border-bottom:1px solid var(--border)}
+.sp-search input{width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:9px 12px;font-size:13px;font-family:'Barlow',sans-serif;outline:none;color:var(--text)}
+.sp-search input:focus{border-color:var(--navy3)}
+.sp-counter{padding:8px 16px 6px;font-size:11px;color:var(--text3);font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.sp-clear{font-size:11px;color:var(--danger);font-weight:700;cursor:pointer;background:none;border:none;padding:3px 6px;border-radius:5px}
+.sp-clear:hover{background:var(--danger-lt)}
+.sp-list{flex:1;overflow-y:auto;padding:4px 0}
+.sp-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:background .15s;user-select:none}
+.sp-item:hover{background:var(--bg)}
+.sp-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--navy3);flex-shrink:0;cursor:pointer}
+.sp-color-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.sp-item-info{flex:1;min-width:0}
+.sp-nick{font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp-seg{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.04em}
+.sp-footer{padding:14px 16px;border-top:1px solid var(--border);background:var(--bg)}
+#btn-apply-sel{width:100%;background:var(--navy);color:#fff;border:none;border-radius:9px;padding:12px;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:background .2s}
+#btn-apply-sel:hover{background:var(--navy3)}
+
+/* ── MAIN CONTENT ── */
+#main{padding:20px 24px}
+
+/* Chips de sellers seleccionados */
+#chips-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;min-height:34px}
+.seller-chip{display:inline-flex;align-items:center;gap:7px;padding:6px 10px 6px 9px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.03em;color:#fff;white-space:nowrap}
+.chip-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.5)}
+.chip-x{background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:50%;width:17px;height:17px;font-size:11px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0}
+.chip-x:hover{background:rgba(255,255,255,.45)}
+#no-sel-msg{font-size:13px;color:var(--text3);font-weight:500;padding:6px 0}
+
+/* Tabs */
+#tab-nav{display:flex;gap:2px;margin-bottom:18px;background:var(--bg3);border-radius:10px;padding:4px;width:fit-content}
+.tab-btn{padding:8px 16px;border:none;background:transparent;border-radius:7px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;color:var(--text2);transition:all .18s;white-space:nowrap}
+.tab-btn.active{background:#fff;color:var(--navy);box-shadow:var(--shadow)}
+
+/* Year filter bar */
+.year-bar{display:flex;gap:6px;margin-bottom:18px;align-items:center}
+.year-bar label{font-size:12px;font-weight:700;color:var(--text2);margin-right:4px;text-transform:uppercase;letter-spacing:.04em}
+.yr-btn{padding:6px 14px;border:1.5px solid var(--border2);background:#fff;border-radius:7px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;color:var(--text2);transition:all .18s}
+.yr-btn.active{border-color:var(--navy3);background:var(--navy3);color:#fff}
+
+/* Cards grid */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-bottom:20px}
+.seller-card{background:#fff;border-radius:12px;padding:18px;box-shadow:var(--shadow);border-top:4px solid var(--border)}
+.sc-header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.sc-color{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.sc-nick{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:900;color:var(--text);text-transform:uppercase;letter-spacing:.02em;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-seg{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--bg3);color:var(--text2);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.sc-metric{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--bg3)}
+.sc-metric:last-child{border-bottom:none}
+.sc-label{font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.sc-value{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;color:var(--text)}
+.sc-delta{font-size:10px;font-weight:700}
+.delta-up{color:var(--success)}
+.delta-dn{color:var(--danger)}
+
+/* Chart section */
+.chart-section{background:#fff;border-radius:12px;padding:20px;box-shadow:var(--shadow);margin-bottom:18px}
+.chart-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.chart-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.04em}
+.chart-subtitle{font-size:11px;color:var(--text3);font-weight:500}
+.chart-wrap{position:relative;height:320px}
+.chart-wrap-sm{position:relative;height:240px}
+.charts-2col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+@media(max-width:800px){.charts-2col{grid-template-columns:1fr}}
+
+/* Comparison Table */
+.cmp-table-wrap{background:#fff;border-radius:12px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px}
+.cmp-table-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.04em;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--bg)}
+.cmp-table-scroll{overflow-x:auto}
+table.cmp{width:100%;border-collapse:collapse;font-size:12px}
+table.cmp th{padding:9px 14px;text-align:right;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--text2);background:var(--bg);border-bottom:1.5px solid var(--border2);white-space:nowrap}
+table.cmp th:first-child{text-align:left}
+table.cmp td{padding:9px 14px;text-align:right;border-bottom:1px solid var(--border);vertical-align:middle;white-space:nowrap}
+table.cmp td:first-child{text-align:left;font-weight:700;font-size:12px}
+table.cmp tr:last-child td{border-bottom:none}
+table.cmp tr:hover td{background:var(--bg)}
+.td-null{color:var(--text3)!important;font-style:italic}
+.td-pct-high{color:var(--success);font-weight:700}
+.td-pct-low{color:var(--danger);font-weight:700}
+.th-seller{padding:8px 14px!important;text-align:left!important}
+.th-nick{font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;max-width:140px;text-overflow:ellipsis;display:block}
+.th-color-bar{height:3px;border-radius:2px;margin-top:3px}
+.full-table-wrap{overflow-x:auto;max-height:500px;overflow-y:auto}
+table.full-cmp{border-collapse:collapse;font-size:11px;white-space:nowrap}
+table.full-cmp th{padding:7px 12px;background:var(--navy);color:#fff;position:sticky;top:0;z-index:10;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-right:1px solid rgba(255,255,255,.1)}
+table.full-cmp th.metric-col{background:var(--navy2)}
+table.full-cmp td{padding:7px 12px;border-bottom:1px solid var(--border);border-right:1px solid var(--border)}
+table.full-cmp tr:hover td{background:rgba(48,74,111,.03)}
+table.full-cmp .row-metric{font-weight:700;color:var(--text);background:var(--bg)!important;position:sticky;left:0;z-index:5}
+.seg-badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;text-transform:uppercase;letter-spacing:.04em}
+.seg-pro{background:rgba(48,74,111,.1);color:var(--navy3)}
+.seg-sd-as{background:var(--teal-lt);color:var(--teal)}
+.seg-sd-no{background:var(--gold-lt);color:#9a8600}
+
+/* Toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);color:#fff;padding:11px 22px;border-radius:9px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;z-index:999;pointer-events:none;white-space:nowrap}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* Empty state */
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty-icon{font-size:48px;margin-bottom:14px}
+.empty-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:var(--text2);text-transform:uppercase;margin-bottom:6px}
+.empty-sub{font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div id="login-box">
+    <div class="login-logo">SI<span>ML</span></div>
+    <div id="login-title">Sellers Intelligence</div>
+    <div id="login-sub">Análisis comparativo de sellers · MercadoLibre</div>
+    <input type="password" id="login-input" placeholder="········" autocomplete="off">
+    <button id="login-btn" onclick="doLogin()">Ingresar</button>
+    <div id="login-err"></div>
+  </div>
+</div>
+
+<!-- UPLOAD -->
+<div id="upload-wrap" style="display:none;min-height:100vh;background:var(--navy);align-items:center;justify-content:center;flex-direction:column">
+  <div id="upload-box" style="background:#fff;border-radius:18px;padding:48px;width:100%;max-width:480px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.4)">
+    <div class="upload-icon">📊</div>
+    <h2 style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:var(--text);margin-bottom:8px">Sellers Intelligence</h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:28px;line-height:1.5">Subí el archivo Excel de sellers para analizar el rendimiento mensual y comparar entre sellers.</p>
+    <div id="dropzone" ondragover="e=>{e.preventDefault();document.getElementById('dropzone').classList.add('drag-over')}" ondragleave="document.getElementById('dropzone').classList.remove('drag-over')" ondrop="handleDrop(event)">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Arrastrá el archivo Excel acá o</p>
+      <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(event)">
+      <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+        📂 Seleccionar archivo
+      </button>
+    </div>
+    <div id="upload-progress" style="display:none;margin-top:20px">
+      <div id="upload-msg" style="font-size:12px;color:var(--text2);font-weight:600;margin-bottom:6px">Procesando...</div>
+      <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+  <!-- Header -->
+  <div id="hdr">
+    <div class="hdr-logo">
+      <span style="font-size:12px;letter-spacing:.08em">SELLERS</span>
+      <div class="hdr-logo-badge">INTEL</div>
+    </div>
+    <div class="hdr-file" id="hdr-file"></div>
+    <div class="hdr-space"></div>
+    <button id="btn-open-panel" onclick="openPanel()">
+      👥 Elegir sellers
+      <span id="sel-count-badge">0</span>
+    </button>
+    <button id="btn-save" onclick="saveState()" style="display:flex;align-items:center;gap:7px;background:rgba(22,163,74,.15);border:1.5px solid rgba(22,163,74,.35);color:#16a34a;border-radius:8px;padding:8px 14px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:background .2s" onmouseover="this.style.background='rgba(22,163,74,.28)'" onmouseout="this.style.background='rgba(22,163,74,.15)'">
+      💾 Guardar
+    </button>
+    <button id="btn-export" onclick="exportReport()" style="display:flex;align-items:center;gap:7px;background:rgba(201,184,0,.18);border:1.5px solid rgba(201,184,0,.4);color:var(--gold);border-radius:8px;padding:8px 14px;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:background .2s" onmouseover="this.style.background='rgba(201,184,0,.3)'" onmouseout="this.style.background='rgba(201,184,0,.18)'">
+      📊 Exportar
+    </button>
+    <button id="btn-logout" onclick="logout()">Cerrar sesión</button>
+  </div>
+
+  <!-- Seller Panel -->
+  <div id="panel-overlay" onclick="closePanel()"></div>
+  <div id="seller-panel">
+    <div class="sp-header">
+      <div class="sp-title">Seleccionar sellers</div>
+      <button class="sp-close" onclick="closePanel()">✕</button>
+    </div>
+    <div class="sp-search">
+      <input type="text" id="sp-search" placeholder="🔍 Buscar seller..." oninput="filterSellerList()">
+    </div>
+    <div class="sp-counter">
+      <span id="sp-counter-txt">0 / 10 seleccionados</span>
+      <button class="sp-clear" onclick="clearSelection()">Limpiar</button>
+    </div>
+    <div class="sp-list" id="sp-list"></div>
+    <div class="sp-footer">
+      <button id="btn-apply-sel" onclick="applySelection()">Aplicar comparación</button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div id="main">
+    <!-- Selected seller chips -->
+    <div id="chips-bar">
+      <div id="no-sel-msg">Seleccioná sellers para comparar usando el botón "Elegir sellers" →</div>
+    </div>
+
+    <!-- Tab navigation -->
+    <div id="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('resumen',this)">📊 Resumen</button>
+      <button class="tab-btn" onclick="switchTab('facturacion',this)">💰 Facturación</button>
+      <button class="tab-btn" onclick="switchTab('unidades',this)">📦 Unidades</button>
+      <button class="tab-btn" onclick="switchTab('logistica',this)">🚚 Logística</button>
+      <button class="tab-btn" onclick="switchTab('comercial',this)">🎯 Comercial</button>
+      <button class="tab-btn" onclick="switchTab('tabla',this)">📋 Tabla completa</button>
+    </div>
+
+    <!-- Tab Content -->
+    <div id="tab-content"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ============================================================
+// CONSTANTS
+// ============================================================
+const PW = 'impexpro2026';
+const MONTHS = ['Enero','Febrero','Marzo'];
+const MONTHS_SHORT = ['Ene','Feb','Mar'];
+const YEARS = ['2025','2026'];
+
+const SELLER_COLORS = [
+  {hex:'#304a6f',rgb:'48,74,111'},
+  {hex:'#c9b800',rgb:'201,184,0'},
+  {hex:'#0092a8',rgb:'0,146,168'},
+  {hex:'#dc2626',rgb:'220,38,38'},
+  {hex:'#16a34a',rgb:'22,163,74'},
+  {hex:'#9333ea',rgb:'147,51,234'},
+  {hex:'#ea580c',rgb:'234,88,12'},
+  {hex:'#0369a1',rgb:'3,105,161'},
+  {hex:'#be185d',rgb:'190,24,93'},
+  {hex:'#475569',rgb:'71,85,105'},
+];
+
+// Column index map (0-based)
+const COL = {
+  facturacion:  { '2025': [4,5,6],   '2026': [7,8,9]   },
+  pctShare:     { '2025': [10,11,12], '2026': [13,14,15] },
+  unidades:     { '2025': [28,29,30], '2026': [31,32,33] },
+  precioPromedio:{ '2025': [52,53,54], '2026': [55,56,57] },
+  itemsConVenta:{ '2025': [70,71,72], '2026': [73,74,75] },
+  pctMe2:       { '2025': [82,83,84], '2026': [85,86,87] },
+  pctFull:      { '2025': [88,89,90], '2026': [91,92,93] },
+  pctFlex:      { '2025': [112,113,114], '2026': [115,116,117] },
+  pctMe1:       { '2025': [118,119,120], '2026': [121,122,123] },
+  pctOfertas:   { '2025': [136,137,138], '2026': [139,140,141] },
+  pctCuotas:    { '2025': [154,155,156], '2026': [157,158,159] },
+  pctPads:      { '2025': [160,161,162], '2026': [163,164,165] },
+  pctBuyBox:    { '2025': [166,167,168], '2026': [169,170,171] },
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let allSellers = [];
+let pendingSelection = []; // nicknames in panel (not yet applied)
+let selectedSellers = []; // applied sellers
+let chartInstances = {};
+let currentTab = 'resumen';
+let currentYear = '2026';
+
+// ============================================================
+// AUTH
+// ============================================================
+function checkAuth(){
+  return sessionStorage.getItem('si_auth') === '1';
+}
+function doLogin(){
+  const v = document.getElementById('login-input').value;
+  const err = document.getElementById('login-err');
+  if(v === PW){
+    sessionStorage.setItem('si_auth','1');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('upload-wrap').style.display = 'flex';
+    err.textContent = '';
+  } else {
+    err.textContent = 'Contraseña incorrecta.';
+    document.getElementById('login-input').value = '';
+  }
+}
+document.getElementById('login-input').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function logout(){
+  sessionStorage.removeItem('si_auth');
+  location.reload();
+}
+
+window.addEventListener('load', () => {
+  if(checkAuth()){
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('upload-wrap').style.display = 'flex';
+  }
+});
+
+// ============================================================
+// FILE UPLOAD
+// ============================================================
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('dropzone').classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if(f) processFile(f);
+}
+function handleFile(e){
+  const f = e.target.files[0];
+  if(f) processFile(f);
+}
+
+function processFile(file){
+  if(!file.name.match(/\.xlsx?$/i)){
+    showToast('⚠️ Solo se aceptan archivos Excel (.xlsx)');
+    return;
+  }
+  const prog = document.getElementById('upload-progress');
+  const msg = document.getElementById('upload-msg');
+  const fill = document.getElementById('prog-fill');
+  prog.style.display = 'block';
+  msg.textContent = 'Leyendo archivo...';
+  fill.style.width = '20%';
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      fill.style.width = '50%';
+      msg.textContent = 'Procesando datos...';
+      const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array', raw:true});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:null, raw:true});
+      fill.style.width = '75%';
+      msg.textContent = 'Construyendo estructura...';
+      setTimeout(() => {
+        allSellers = parseRows(rows);
+        fill.style.width = '100%';
+        msg.textContent = `✅ ${allSellers.length} sellers cargados`;
+        document.getElementById('hdr-file').textContent = file.name;
+        setTimeout(() => {
+          document.getElementById('upload-wrap').style.display = 'none';
+          document.getElementById('app').style.display = 'block';
+          buildSellerList();
+          renderTab();
+          loadSavedState();
+        }, 500);
+      }, 200);
+    } catch(err){
+      console.error(err);
+      prog.style.display = 'none';
+      showToast('❌ Error al procesar el archivo');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ============================================================
+// DATA PARSING
+// ============================================================
+function parseRows(rows){
+  // Rows 0-3 = headers, row 4 = Total general → skip
+  const data = rows.slice(5);
+  return data.map(r => extractSeller(r)).filter(s => s && s.nickname && s.nickname !== 'Total');
+}
+
+function n(v){ // safe number
+  if(v === null || v === undefined || v === '') return null;
+  const num = Number(v);
+  return isNaN(num) ? null : num;
+}
+function pct(v){ // safe percentage (0-1 → 0-100)
+  const num = n(v);
+  return num === null ? null : num * 100;
+}
+
+function extractSeller(r){
+  if(!r || !r[1]) return null;
+  const s = {
+    id: r[0] ? String(r[0]) : '',
+    nickname: String(r[1]).trim(),
+    segmento: r[2] ? String(r[2]).trim() : '',
+    asesor: r[3] ? String(r[3]).trim() : '',
+  };
+
+  for(const [key, cols] of Object.entries(COL)){
+    s[key] = {};
+    for(const yr of YEARS){
+      const isPct = key.startsWith('pct') || key === 'pctShare';
+      s[key][yr] = cols[yr].map(c => isPct ? pct(r[c]) : n(r[c]));
+    }
+  }
+
+  // Compute Q1 totals per year
+  s.q1 = {};
+  for(const yr of YEARS){
+    s.q1[yr] = {
+      facturacion: s.facturacion[yr].reduce((a,b) => (a||0)+(b||0), 0),
+      unidades: s.unidades[yr].reduce((a,b) => (a||0)+(b||0), 0),
+    };
+    // Average for percentages and precio promedio
+    for(const k of ['pctShare','pctFull','pctFlex','pctMe1','pctMe2','pctOfertas','pctCuotas','pctPads','pctBuyBox','precioPromedio']){
+      const vals = s[k][yr].filter(v => v !== null);
+      s.q1[yr][k] = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    }
+  }
+
+  return s;
+}
+
+// ============================================================
+// SELLER SELECTION UI
+// ============================================================
+function buildSellerList(filter=''){
+  const list = document.getElementById('sp-list');
+  list.innerHTML = '';
+  const q = filter.toLowerCase();
+  const filtered = allSellers.filter(s => !q || s.nickname.toLowerCase().includes(q) || (s.segmento||'').toLowerCase().includes(q));
+  
+  // Show max 150 at a time for performance; search filters down
+  const toShow = filtered.slice(0, 150);
+  
+  toShow.forEach((seller) => {
+    const origIdx = allSellers.indexOf(seller);
+    const colorIdx = selectedSellers.findIndex(s => s.nickname === seller.nickname);
+    const colorI = colorIdx >= 0 ? colorIdx : origIdx;
+    const color = SELLER_COLORS[colorI % SELLER_COLORS.length];
+    const item = document.createElement('div');
+    item.className = 'sp-item';
+    item.dataset.nick = seller.nickname;
+    const seg = seller.segmento || '';
+    const segClass = seg.includes('PRO') ? 'seg-pro' : seg.includes('NO ASESORADO') ? 'seg-sd-no' : 'seg-sd-as';
+    const isChecked = pendingSelection.includes(seller.nickname);
+    item.innerHTML = `
+      <input type="checkbox" id="chk_${origIdx}" ${isChecked?'checked':''} data-nick="${seller.nickname}" data-idx="${origIdx}" onchange="togglePending(this)">
+      <div class="sp-color-dot" style="background:${color.hex}"></div>
+      <div class="sp-item-info">
+        <div class="sp-nick">${seller.nickname}</div>
+        <div class="sp-seg"><span class="seg-badge ${segClass}">${seg||'—'}</span></div>
+      </div>
+    `;
+    item.addEventListener('click', e => {
+      if(e.target.tagName !== 'INPUT') {
+        const chk = item.querySelector('input');
+        chk.checked = !chk.checked;
+        togglePending(chk);
+      }
+    });
+    list.appendChild(item);
+  });
+  
+  if(filtered.length > 150){
+    const note = document.createElement('div');
+    note.style.cssText = 'padding:10px 16px;font-size:11px;color:var(--text3);text-align:center;font-style:italic';
+    note.textContent = `Mostrando 150 de ${filtered.length}. Buscá para filtrar.`;
+    list.appendChild(note);
+  }
+  if(!filtered.length){
+    list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text3);font-size:12px">Sin resultados</div>';
+  }
+}
+
+function filterSellerList(){
+  const q = document.getElementById('sp-search').value;
+  buildSellerList(q);
+}
+
+function togglePending(chk){
+  const nick = chk.dataset.nick;
+  if(chk.checked){
+    if(!pendingSelection.includes(nick)){
+      if(pendingSelection.length >= 10){
+        chk.checked = false;
+        showToast('⚠️ Máximo 10 sellers');
+        return;
+      }
+      pendingSelection.push(nick);
+    }
+  } else {
+    pendingSelection = pendingSelection.filter(n => n !== nick);
+  }
+  updatePanelCounter();
+}
+
+function updatePanelCounter(){
+  document.getElementById('sp-counter-txt').textContent = `${pendingSelection.length} / 10 seleccionados`;
+}
+
+function clearSelection(){
+  pendingSelection = [];
+  buildSellerList(document.getElementById('sp-search').value);
+  updatePanelCounter();
+}
+
+function openPanel(){
+  pendingSelection = [...selectedSellers.map(s => s.nickname)];
+  document.getElementById('sp-search').value = '';
+  buildSellerList('');
+  updatePanelCounter();
+  document.getElementById('seller-panel').classList.add('open');
+  document.getElementById('panel-overlay').classList.add('open');
+}
+
+function closePanel(){
+  document.getElementById('seller-panel').classList.remove('open');
+  document.getElementById('panel-overlay').classList.remove('open');
+}
+
+function applySelection(){
+  selectedSellers = pendingSelection.map(nick => {
+    const idx = allSellers.findIndex(s => s.nickname === nick);
+    return { ...allSellers[idx], colorIdx: pendingSelection.indexOf(nick) };
+  });
+  closePanel();
+  renderChips();
+  document.getElementById('sel-count-badge').textContent = selectedSellers.length;
+  destroyAllCharts();
+  renderTab();
+}
+
+function removeSeller(nick){
+  selectedSellers = selectedSellers.filter(s => s.nickname !== nick);
+  selectedSellers = selectedSellers.map((s, i) => ({ ...s, colorIdx: i }));
+  document.getElementById('sel-count-badge').textContent = selectedSellers.length;
+  renderChips();
+  destroyAllCharts();
+  renderTab();
+}
+
+function renderChips(){
+  const bar = document.getElementById('chips-bar');
+  bar.innerHTML = '';
+  if(!selectedSellers.length){
+    bar.innerHTML = '<div id="no-sel-msg">Seleccioná sellers para comparar usando el botón "Elegir sellers" →</div>';
+    return;
+  }
+  selectedSellers.forEach(s => {
+    const c = SELLER_COLORS[s.colorIdx % SELLER_COLORS.length];
+    const chip = document.createElement('span');
+    chip.className = 'seller-chip';
+    chip.style.background = c.hex;
+    chip.innerHTML = `<span class="chip-dot"></span>${s.nickname}<button class="chip-x" onclick="removeSeller('${s.nickname}')">✕</button>`;
+    bar.appendChild(chip);
+  });
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tab, btn){
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  destroyAllCharts();
+  renderTab();
+}
+
+function renderTab(){
+  const tc = document.getElementById('tab-content');
+  if(!selectedSellers.length){
+    tc.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">Elegí sellers para comparar</div><div class="empty-sub">Seleccioná hasta 10 sellers usando el botón de arriba</div></div>`;
+    return;
+  }
+  const tabs = {
+    resumen: renderResumen,
+    facturacion: renderFacturacion,
+    unidades: renderUnidades,
+    logistica: renderLogistica,
+    comercial: renderComercial,
+    tabla: renderTablaCompleta,
+  };
+  (tabs[currentTab] || renderResumen)(tc);
+}
+
+// ============================================================
+// YEAR BAR HELPER
+// ============================================================
+function makeYearBar(activeYear, onChange){
+  return `<div class="year-bar">
+    <label>Año:</label>
+    ${YEARS.map(yr => `<button class="yr-btn${activeYear===yr?' active':''}" onclick="(${onChange.toString()})('${yr}')">${yr}</button>`).join('')}
+    <button class="yr-btn${activeYear==='both'?' active':''}" onclick="(${onChange.toString()})('both')">Ambos</button>
+  </div>`;
+}
+
+// ============================================================
+// FORMAT HELPERS
+// ============================================================
+function fmtMoney(n){ 
+  if(n===null||n===undefined) return '—';
+  if(n >= 1e9) return '$' + (n/1e9).toFixed(1) + 'B';
+  if(n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M';
+  if(n >= 1e3) return '$' + (n/1e3).toFixed(0) + 'K';
+  return '$' + Math.round(n).toLocaleString('es-AR');
+}
+function fmtNum(n){ 
+  if(n===null||n===undefined) return '—';
+  return Math.round(n).toLocaleString('es-AR');
+}
+function fmtPct(n, dec=1){ 
+  if(n===null||n===undefined) return '—';
+  return n.toFixed(dec) + '%';
+}
+function fmtDelta(now, prev){
+  if(now===null||prev===null||!prev) return '';
+  const d = ((now - prev) / Math.abs(prev)) * 100;
+  const cls = d >= 0 ? 'delta-up' : 'delta-dn';
+  const sign = d >= 0 ? '+' : '';
+  return `<span class="sc-delta ${cls}">${sign}${d.toFixed(1)}%</span>`;
+}
+
+// ============================================================
+// RESUMEN TAB
+// ============================================================
+function renderResumen(tc){
+  // Build overview cards
+  let html = `<div class="cards-grid">`;
+  selectedSellers.forEach(s => {
+    const c = SELLER_COLORS[s.colorIdx % SELLER_COLORS.length];
+    const f26 = s.q1['2026'].facturacion;
+    const f25 = s.q1['2025'].facturacion;
+    const u26 = s.q1['2026'].unidades;
+    const u25 = s.q1['2025'].unidades;
+    const pp26 = s.q1['2026'].precioPromedio;
+    const full26 = s.q1['2026'].pctFull;
+    const flex26 = s.q1['2026'].pctFlex;
+    const of26 = s.q1['2026'].pctOfertas;
+    const cuot26 = s.q1['2026'].pctCuotas;
+    const segClass = s.segmento.includes('PRO') ? 'seg-pro' : s.segmento.includes('NO ASESORADO') ? 'seg-sd-no' : 'seg-sd-as';
+    html += `<div class="seller-card" style="border-top-color:${c.hex}">
+      <div class="sc-header">
+        <div class="sc-color" style="background:${c.hex}"></div>
+        <div class="sc-nick">${s.nickname}</div>
+        <div class="sc-seg"><span class="seg-badge ${segClass}">${s.segmento||'—'}</span></div>
+      </div>
+      <div class="sc-metric">
+        <span class="sc-label">Fact. Q1 2026</span>
+        <span class="sc-value">${fmtMoney(f26)} ${fmtDelta(f26, f25)}</span>
+      </div>
+      <div class="sc-metric">
+        <span class="sc-label">Unidades Q1 2026</span>
+        <span class="sc-value">${fmtNum(u26)} ${fmtDelta(u26, u25)}</span>
+      </div>
+      <div class="sc-metric">
+        <span class="sc-label">Precio promedio</span>
+        <span class="sc-value">${pp26!==null ? fmtMoney(pp26) : '—'}</span>
+      </div>
+      <div class="sc-metric">
+        <span class="sc-label">%FULL</span>
+        <span class="sc-value">${fmtPct(full26)}</span>
+      </div>
+      <div class="sc-metric">
+        <span class="sc-label">%FLEX</span>
+        <span class="sc-value">${fmtPct(flex26)}</span>
+      </div>
+      <div class="sc-metric">
+        <span class="sc-label">%OFERTAS</span>
+        <span class="sc-value">${fmtPct(of26)}</span>
+      </div>
+      <div class="sc-metric">
+        <span class="sc-label">%CUOTAS S/I</span>
+        <span class="sc-value">${fmtPct(cuot26)}</span>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+
+  // Bar chart: Facturación Q1 2026 comparison
+  html += `<div class="chart-section">
+    <div class="chart-hdr">
+      <div><div class="chart-title">Facturación Q1 — Comparativa 2025 vs 2026</div><div class="chart-subtitle">Barras agrupadas por seller · eje Y en millones de pesos</div></div>
+    </div>
+    <div class="chart-wrap"><canvas id="chart-resumen"></canvas></div>
+  </div>`;
+
+  tc.innerHTML = html;
+
+  // Horizontal bar: Q1 totals per seller (2025 vs 2026)
+  const sellerLabels = selectedSellers.map(s => s.nickname);
+  const d25 = selectedSellers.map(s => s.q1['2025'].facturacion);
+  const d26 = selectedSellers.map(s => s.q1['2026'].facturacion);
+  const ds = [
+    {
+      label: 'Q1 2025',
+      data: d25,
+      backgroundColor: selectedSellers.map((_,i) => `rgba(${SELLER_COLORS[i%10].rgb},0.35)`),
+      borderColor: selectedSellers.map((_,i) => SELLER_COLORS[i%10].hex),
+      borderWidth: 1.5,
+    },
+    {
+      label: 'Q1 2026',
+      data: d26,
+      backgroundColor: selectedSellers.map((_,i) => `rgba(${SELLER_COLORS[i%10].rgb},0.78)`),
+      borderColor: selectedSellers.map((_,i) => SELLER_COLORS[i%10].hex),
+      borderWidth: 2,
+    }
+  ];
+  makeChartHBar('chart-resumen', sellerLabels, ds, v => fmtMoney(v));
+}
+
+// ============================================================
+// FACTURACIÓN TAB
+// ============================================================
+function renderFacturacion(tc){
+  let selYear = currentYear === '2025' || currentYear === '2026' ? currentYear : '2026';
+  tc.innerHTML = `
+    <div class="year-bar">
+      <label>Vista:</label>
+      <button class="yr-btn${selYear==='2025'?' active':''}" onclick="currentYear='2025';destroyAllCharts();renderTab()">2025</button>
+      <button class="yr-btn${selYear==='2026'?' active':''}" onclick="currentYear='2026';destroyAllCharts();renderTab()">2026</button>
+      <button class="yr-btn${currentYear==='both'?' active':''}" onclick="currentYear='both';destroyAllCharts();renderTab()">Comparar ambos</button>
+    </div>
+    <div class="chart-section">
+      <div class="chart-hdr">
+        <div><div class="chart-title">Facturación mensual — ${currentYear==='both'?'2025 vs 2026':currentYear}</div><div class="chart-subtitle">Evolución ene/feb/mar por seller</div></div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-fact-line"></canvas></div>
+    </div>
+    <div class="cmp-table-wrap">
+      <div class="cmp-table-title">Detalle por seller · Facturación ($)</div>
+      <div class="cmp-table-scroll">${buildMetricTable('facturacion', fmtMoney)}</div>
+    </div>
+  `;
+
+  const yrs = currentYear === 'both' ? YEARS : [selYear];
+  buildLineChartOrBar('chart-fact-line', 'facturacion', yrs, v => fmtMoney(v));
+}
+
+// ============================================================
+// UNIDADES TAB
+// ============================================================
+function renderUnidades(tc){
+  let selYear = ['2025','2026'].includes(currentYear) ? currentYear : '2026';
+  tc.innerHTML = `
+    <div class="year-bar">
+      <label>Vista:</label>
+      <button class="yr-btn${selYear==='2025'?' active':''}" onclick="currentYear='2025';destroyAllCharts();renderTab()">2025</button>
+      <button class="yr-btn${selYear==='2026'?' active':''}" onclick="currentYear='2026';destroyAllCharts();renderTab()">2026</button>
+      <button class="yr-btn${currentYear==='both'?' active':''}" onclick="currentYear='both';destroyAllCharts();renderTab()">Comparar ambos</button>
+    </div>
+    <div class="charts-2col">
+      <div class="chart-section">
+        <div class="chart-hdr"><div><div class="chart-title">Unidades vendidas</div><div class="chart-subtitle">Evolución mensual por seller</div></div></div>
+        <div class="chart-wrap-sm"><canvas id="chart-units-line"></canvas></div>
+      </div>
+      <div class="chart-section">
+        <div class="chart-hdr"><div><div class="chart-title">Precio promedio</div><div class="chart-subtitle">$/unidad por mes</div></div></div>
+        <div class="chart-wrap-sm"><canvas id="chart-pp-line"></canvas></div>
+      </div>
+    </div>
+    <div class="cmp-table-wrap">
+      <div class="cmp-table-title">Detalle por seller · Unidades vendidas</div>
+      <div class="cmp-table-scroll">${buildMetricTable('unidades', fmtNum)}</div>
+    </div>
+    <div class="cmp-table-wrap" style="margin-top:14px">
+      <div class="cmp-table-title">Detalle por seller · Precio promedio</div>
+      <div class="cmp-table-scroll">${buildMetricTable('precioPromedio', fmtMoney)}</div>
+    </div>
+  `;
+
+  const yrs = currentYear === 'both' ? YEARS : [selYear];
+  buildLineChartOrBar('chart-units-line', 'unidades', yrs, v => fmtNum(v));
+  buildLineChartOrBar('chart-pp-line', 'precioPromedio', yrs, v => fmtMoney(v));
+}
+
+// ============================================================
+// LOGÍSTICA TAB
+// ============================================================
+function renderLogistica(tc){
+  let selYear = ['2025','2026'].includes(currentYear) ? currentYear : '2026';
+  tc.innerHTML = `
+    <div class="year-bar">
+      <label>Vista:</label>
+      <button class="yr-btn${selYear==='2025'?' active':''}" onclick="currentYear='2025';destroyAllCharts();renderTab()">2025</button>
+      <button class="yr-btn${selYear==='2026'?' active':''}" onclick="currentYear='2026';destroyAllCharts();renderTab()">2026</button>
+      <button class="yr-btn${currentYear==='both'?' active':''}" onclick="currentYear='both';destroyAllCharts();renderTab()">Comparar ambos</button>
+    </div>
+    <div class="charts-2col">
+      <div class="chart-section">
+        <div class="chart-hdr"><div><div class="chart-title">%FULL (Mercado Envíos Full)</div><div class="chart-subtitle">% de ventas por logística Full</div></div></div>
+        <div class="chart-wrap-sm"><canvas id="chart-full"></canvas></div>
+      </div>
+      <div class="chart-section">
+        <div class="chart-hdr"><div><div class="chart-title">%FLEX (Mercado Envíos Flex)</div><div class="chart-subtitle">% de ventas por logística Flex</div></div></div>
+        <div class="chart-wrap-sm"><canvas id="chart-flex"></canvas></div>
+      </div>
+    </div>
+    <div class="charts-2col">
+      <div class="chart-section">
+        <div class="chart-hdr"><div><div class="chart-title">%ME1 (Normal/Clásico)</div><div class="chart-subtitle">% de ventas por envío normal</div></div></div>
+        <div class="chart-wrap-sm"><canvas id="chart-me1"></canvas></div>
+      </div>
+      <div class="chart-section">
+        <div class="chart-hdr"><div><div class="chart-title">%ME2 (Carro/Colecta)</div><div class="chart-subtitle">% de ventas modo ME2</div></div></div>
+        <div class="chart-wrap-sm"><canvas id="chart-me2"></canvas></div>
+      </div>
+    </div>
+    <div class="cmp-table-wrap">
+      <div class="cmp-table-title">Comparativa logística — % por mes · ${selYear}</div>
+      <div class="cmp-table-scroll">${buildMultiMetricTable(['pctFull','pctFlex','pctMe1','pctMe2'],['%FULL','%FLEX','%ME1','%ME2'], selYear, fmtPct)}</div>
+    </div>
+  `;
+
+  const yrs = currentYear === 'both' ? YEARS : [selYear];
+  buildLineChartOrBar('chart-full', 'pctFull', yrs, v => fmtPct(v));
+  buildLineChartOrBar('chart-flex', 'pctFlex', yrs, v => fmtPct(v));
+  buildLineChartOrBar('chart-me1', 'pctMe1', yrs, v => fmtPct(v));
+  buildLineChartOrBar('chart-me2', 'pctMe2', yrs, v => fmtPct(v));
+}
+
+// ============================================================
+// COMERCIAL TAB
+// ============================================================
+function renderComercial(tc){
+  let selYear = ['2025','2026'].includes(currentYear) ? currentYear : '2026';
+  tc.innerHTML = `
+    <div class="year-bar">
+      <label>Vista:</label>
+      <button class="yr-btn${selYear==='2025'?' active':''}" onclick="currentYear='2025';destroyAllCharts();renderTab()">2025</button>
+      <button class="yr-btn${selYear==='2026'?' active':''}" onclick="currentYear='2026';destroyAllCharts();renderTab()">2026</button>
+      <button class="yr-btn${currentYear==='both'?' active':''}" onclick="currentYear='both';destroyAllCharts();renderTab()">Comparar ambos</button>
+    </div>
+    <div class="charts-2col">
+      <div class="chart-section">
+        <div class="chart-hdr"><div><div class="chart-title">%OFERTAS</div><div class="chart-subtitle">% de ventas con precio de oferta activo</div></div></div>
+        <div class="chart-wrap-sm"><canvas id="chart-ofertas"></canvas></div>
+      </div>
+      <div class="chart-section">
+        <div class="chart-hdr"><div><div class="chart-title">%CUOTAS SIN INTERÉS</div><div class="chart-subtitle">% de ventas con cuotas sin interés</div></div></div>
+        <div class="chart-wrap-sm"><canvas id="chart-cuotas"></canvas></div>
+      </div>
+    </div>
+    <div class="charts-2col">
+      <div class="chart-section">
+        <div class="chart-hdr"><div><div class="chart-title">%PADS (Publicidad)</div><div class="chart-subtitle">% de ventas con Product Ads activos</div></div></div>
+        <div class="chart-wrap-sm"><canvas id="chart-pads"></canvas></div>
+      </div>
+      <div class="chart-section">
+        <div class="chart-hdr"><div><div class="chart-title">%BUY BOX</div><div class="chart-subtitle">% de ganancia de Buy Box</div></div></div>
+        <div class="chart-wrap-sm"><canvas id="chart-buybox"></canvas></div>
+      </div>
+    </div>
+    <div class="cmp-table-wrap">
+      <div class="cmp-table-title">Comparativa comercial — % por mes · ${selYear}</div>
+      <div class="cmp-table-scroll">${buildMultiMetricTable(['pctOfertas','pctCuotas','pctPads','pctBuyBox'],['%Ofertas','%Cuotas S/I','%PADS','%Buy Box'], selYear, fmtPct)}</div>
+    </div>
+  `;
+
+  const yrs = currentYear === 'both' ? YEARS : [selYear];
+  buildLineChartOrBar('chart-ofertas', 'pctOfertas', yrs, v => fmtPct(v));
+  buildLineChartOrBar('chart-cuotas', 'pctCuotas', yrs, v => fmtPct(v));
+  buildLineChartOrBar('chart-pads', 'pctPads', yrs, v => fmtPct(v));
+  buildLineChartOrBar('chart-buybox', 'pctBuyBox', yrs, v => fmtPct(v));
+}
+
+// ============================================================
+// TABLA COMPLETA TAB
+// ============================================================
+function renderTablaCompleta(tc){
+  const selYear = ['2025','2026'].includes(currentYear) ? currentYear : '2026';
+  const metrics = [
+    { key:'facturacion', label:'Facturación ($)', fmt: fmtMoney },
+    { key:'pctShare', label:'% Participación', fmt: fmtPct },
+    { key:'unidades', label:'Unidades vendidas', fmt: fmtNum },
+    { key:'precioPromedio', label:'Precio promedio', fmt: fmtMoney },
+    { key:'itemsConVenta', label:'Items con venta', fmt: fmtNum },
+    { key:'pctFull', label:'%FULL', fmt: fmtPct },
+    { key:'pctFlex', label:'%FLEX', fmt: fmtPct },
+    { key:'pctMe1', label:'%ME1', fmt: fmtPct },
+    { key:'pctMe2', label:'%ME2', fmt: fmtPct },
+    { key:'pctOfertas', label:'%OFERTAS', fmt: fmtPct },
+    { key:'pctCuotas', label:'%CUOTAS S/I', fmt: fmtPct },
+    { key:'pctPads', label:'%PADS', fmt: fmtPct },
+    { key:'pctBuyBox', label:'%BUY BOX', fmt: fmtPct },
+  ];
+
+  // Header row: Metric | [for each seller: ene / feb / mar]
+  let rows = `<tr>
+    <th class="metric-col" style="min-width:160px;text-align:left">Métrica / Año</th>`;
+  selectedSellers.forEach(s => {
+    const c = SELLER_COLORS[s.colorIdx % SELLER_COLORS.length];
+    rows += `<th class="th-seller" colspan="3" style="min-width:180px">
+      <div class="th-nick">${s.nickname}</div>
+      <div class="th-color-bar" style="background:${c.hex}"></div>
+    </th>`;
+  });
+  rows += `</tr><tr><th></th>`;
+  selectedSellers.forEach(() => {
+    MONTHS_SHORT.forEach(m => { rows += `<th style="text-align:right;font-weight:600">${m}</th>`; });
+  });
+  rows += `</tr>`;
+
+  const yrs = currentYear === 'both' ? YEARS : [selYear];
+  metrics.forEach(m => {
+    yrs.forEach(yr => {
+      rows += `<tr>
+        <td class="row-metric">${m.label}<span style="font-size:9px;color:var(--text3);margin-left:5px">${yr}</span></td>`;
+      selectedSellers.forEach(s => {
+        const vals = s[m.key][yr];
+        vals.forEach(v => {
+          const fmt = v !== null ? m.fmt(v) : '—';
+          rows += `<td style="text-align:right">${fmt}</td>`;
+        });
+      });
+      rows += `</tr>`;
+    });
+  });
+
+  tc.innerHTML = `
+    <div class="year-bar">
+      <label>Vista:</label>
+      <button class="yr-btn${selYear==='2025'?' active':''}" onclick="currentYear='2025';destroyAllCharts();renderTab()">2025</button>
+      <button class="yr-btn${selYear==='2026'?' active':''}" onclick="currentYear='2026';destroyAllCharts();renderTab()">2026</button>
+      <button class="yr-btn${currentYear==='both'?' active':''}" onclick="currentYear='both';destroyAllCharts();renderTab()">Ambos</button>
+    </div>
+    <div class="cmp-table-wrap">
+      <div class="cmp-table-title">Tabla comparativa completa — ${currentYear==='both'?'2025 y 2026':selYear}</div>
+      <div class="full-table-wrap">
+        <table class="full-cmp"><tbody>${rows}</tbody></table>
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// TABLE BUILDERS
+// ============================================================
+function buildMetricTable(metricKey, fmtFn){
+  // Rows = sellers, Cols = ene/feb/mar per year + Q1 total + Δ
+  let html = `<table class="cmp"><thead><tr>
+    <th style="text-align:left">Seller</th>`;
+  YEARS.forEach(yr => {
+    MONTHS_SHORT.forEach(m => html += `<th>${m} ${yr}</th>`);
+    html += `<th>Q1 ${yr}</th>`;
+  });
+  html += `<th>Δ Q1</th></tr></thead><tbody>`;
+
+  selectedSellers.forEach(s => {
+    const c = SELLER_COLORS[s.colorIdx % SELLER_COLORS.length];
+    html += `<tr><td style="text-align:left;font-weight:700">
+      <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${c.hex};margin-right:7px"></span>
+      ${s.nickname}
+    </td>`;
+    let q1_25 = 0, q1_26 = 0;
+    YEARS.forEach(yr => {
+      const vals = s[metricKey][yr];
+      vals.forEach(v => { html += `<td>${v !== null ? fmtFn(v) : '<span class="td-null">—</span>'}</td>`; });
+      const q1 = vals.reduce((a,b) => (a||0)+(b||0), 0);
+      if(yr==='2025') q1_25 = q1; else q1_26 = q1;
+      html += `<td style="font-weight:700">${fmtFn(q1)}</td>`;
+    });
+    const delta = q1_25 ? ((q1_26-q1_25)/Math.abs(q1_25)*100) : null;
+    const dClass = delta !== null ? (delta >= 0 ? 'delta-up' : 'delta-dn') : '';
+    const dText = delta !== null ? `<span class="${dClass}">${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%</span>` : '—';
+    html += `<td>${dText}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  return html;
+}
+
+function buildMultiMetricTable(keys, labels, year, fmtFn){
+  let html = `<table class="cmp"><thead><tr>
+    <th style="text-align:left">Seller</th>`;
+  labels.forEach(l => MONTHS_SHORT.forEach(m => html += `<th>${l} ${m}</th>`));
+  html += `</tr></thead><tbody>`;
+  selectedSellers.forEach(s => {
+    const c = SELLER_COLORS[s.colorIdx % SELLER_COLORS.length];
+    html += `<tr><td style="text-align:left;font-weight:700">
+      <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${c.hex};margin-right:7px"></span>
+      ${s.nickname}
+    </td>`;
+    keys.forEach(k => {
+      const vals = s[k][year];
+      vals.forEach(v => {
+        const cls = v !== null && k.startsWith('pct') ? (v > 50 ? 'td-pct-high' : '') : '';
+        html += `<td class="${cls}">${v !== null ? fmtFn(v) : '<span class="td-null">—</span>'}</td>`;
+      });
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table>`;
+  return html;
+}
+
+// ============================================================
+// CHART HELPERS
+// ============================================================
+function buildLineDatasets(metricKey, years){
+  const useLine = years.length === 1;
+  const datasets = [];
+  selectedSellers.forEach(s => {
+    const c = SELLER_COLORS[s.colorIdx % SELLER_COLORS.length];
+    years.forEach((yr) => {
+      const isDashed = yr === '2025';
+      const ds = {
+        label: years.length > 1 ? `${s.nickname} ${yr}` : s.nickname,
+        data: s[metricKey][yr],
+        borderColor: c.hex,
+        borderWidth: useLine ? 2.5 : 1.5,
+      };
+      if(useLine){
+        ds.backgroundColor = `rgba(${c.rgb},0.08)`;
+        ds.borderDash = isDashed ? [6,3] : [];
+        ds.pointRadius = 4;
+        ds.pointHoverRadius = 6;
+        ds.pointBackgroundColor = c.hex;
+        ds.tension = 0.35;
+        ds.fill = false;
+      } else {
+        ds.backgroundColor = isDashed ? `rgba(${c.rgb},0.35)` : `rgba(${c.rgb},0.75)`;
+      }
+      datasets.push(ds);
+    });
+  });
+  return datasets;
+}
+
+function buildLineChartOrBar(canvasId, metricKey, years, tickFmt){
+  const type = years.length > 1 ? 'bar' : 'line';
+  const datasets = buildLineDatasets(metricKey, years);
+  makeChart(canvasId, type, MONTHS_SHORT, datasets, tickFmt);
+}
+
+function makeChartHBar(canvasId, labels, datasets, tickFmt){
+  const ctx = document.getElementById(canvasId);
+  if(!ctx) return;
+  if(chartInstances[canvasId]){ chartInstances[canvasId].destroy(); }
+  chartInstances[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { family:'Barlow', size:11, weight:'600' }, boxWidth:12, boxHeight:12, padding:10, usePointStyle:true }
+        },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${tickFmt ? tickFmt(ctx.raw) : ctx.raw}` } }
+      },
+      scales: {
+        x: { grid: { color:'rgba(0,0,0,0.05)' }, ticks: { font: { family:'Barlow', size:11 }, callback: tickFmt || (v => v) } },
+        y: { grid: { display:false }, ticks: { font: { family:'Barlow', size:11, weight:'600' } } }
+      }
+    }
+  });
+}
+
+function makeChart(canvasId, type, labels, datasets, tickFmt){
+  const ctx = document.getElementById(canvasId);
+  if(!ctx) return;
+  if(chartInstances[canvasId]){ chartInstances[canvasId].destroy(); }
+  chartInstances[canvasId] = new Chart(ctx, {
+    type,
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode:'index', intersect:false },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { 
+            font: { family:'Barlow', size:11, weight:'600' },
+            boxWidth: 12, boxHeight: 12,
+            padding: 12,
+            usePointStyle: true,
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${tickFmt ? tickFmt(ctx.raw) : ctx.raw}`,
+          }
+        }
+      },
+      scales: {
+        x: { 
+          grid: { display:false },
+          ticks: { font: { family:'Barlow', size:12, weight:'600' } }
+        },
+        y: { 
+          beginAtZero: false,
+          grid: { color:'rgba(0,0,0,0.05)' },
+          ticks: { 
+            font: { family:'Barlow', size:11 },
+            callback: tickFmt || (v => v),
+          }
+        }
+      }
+    }
+  });
+}
+
+function destroyAllCharts(){
+  Object.values(chartInstances).forEach(c => { try { c.destroy(); } catch(e){} });
+  chartInstances = {};
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+// ============================================================
+// SAVE / LOAD STATE  (localStorage)
+// ============================================================
+function saveState(){
+  if(!selectedSellers.length){ showToast('⚠️ Seleccioná sellers primero'); return; }
+  const state = {
+    selectedNicks: selectedSellers.map(s => s.nickname),
+    currentYear,
+    currentTab,
+    fileName: document.getElementById('hdr-file').textContent,
+  };
+  localStorage.setItem('si_state', JSON.stringify(state));
+  showToast('✅ Selección guardada — se restaurará al reabrir');
+}
+
+function loadSavedState(){
+  try {
+    const raw = localStorage.getItem('si_state');
+    if(!raw) return;
+    const state = JSON.parse(raw);
+    if(!state.selectedNicks || !state.selectedNicks.length) return;
+    // Restore sellers
+    pendingSelection = state.selectedNicks.filter(nick => allSellers.some(s => s.nickname === nick));
+    if(pendingSelection.length){
+      applySelection();
+      currentYear = state.currentYear || '2026';
+      // Restore active tab
+      if(state.currentTab){
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        tabBtns.forEach(btn => {
+          if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${state.currentTab}'`)){
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        });
+        currentTab = state.currentTab;
+        destroyAllCharts();
+        renderTab();
+      }
+      showToast(`✅ Sesión restaurada — ${pendingSelection.length} sellers`);
+    }
+  } catch(e){ /* ignore */ }
+}
+
+// ============================================================
+// EXPORT REPORT  (HTML autónomo con gráficos PNG + datos)
+// ============================================================
+async function exportReport(){
+  if(!selectedSellers.length){ showToast('⚠️ Seleccioná sellers primero'); return; }
+  showToast('⏳ Generando reporte...');
+
+  // Capturar todos los gráficos actuales como PNG
+  const charts = {};
+  for(const [id, instance] of Object.entries(chartInstances)){
+    try { charts[id] = instance.toBase64Image('image/png', 1); } catch(e){}
+  }
+
+  const date = new Date().toLocaleDateString('es-AR', {day:'2-digit', month:'long', year:'numeric'});
+  const sellersList = selectedSellers.map((s,i) => {
+    const c = SELLER_COLORS[s.colorIdx % SELLER_COLORS.length];
+    return `<span style="display:inline-flex;align-items:center;gap:6px;background:${c.hex};color:#fff;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:700;margin:3px">
+      <span style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.5)"></span>${s.nickname}
+    </span>`;
+  }).join('');
+
+  // ── Tabla resumen Q1 ──
+  const metrics = [
+    { key:'facturacion',   label:'Facturación',        fmt: fmtMoney, isPct:false },
+    { key:'pctShare',      label:'% Participación',    fmt: fmtPct,   isPct:true  },
+    { key:'unidades',      label:'Unidades vendidas',  fmt: fmtNum,   isPct:false },
+    { key:'precioPromedio',label:'Precio promedio',    fmt: fmtMoney, isPct:false },
+    { key:'pctFull',       label:'%FULL',              fmt: fmtPct,   isPct:true  },
+    { key:'pctFlex',       label:'%FLEX',              fmt: fmtPct,   isPct:true  },
+    { key:'pctMe1',        label:'%ME1',               fmt: fmtPct,   isPct:true  },
+    { key:'pctMe2',        label:'%ME2',               fmt: fmtPct,   isPct:true  },
+    { key:'pctOfertas',    label:'%OFERTAS',           fmt: fmtPct,   isPct:true  },
+    { key:'pctCuotas',     label:'%CUOTAS S/I',        fmt: fmtPct,   isPct:true  },
+    { key:'pctPads',       label:'%PADS',              fmt: fmtPct,   isPct:true  },
+    { key:'pctBuyBox',     label:'%BUY BOX',           fmt: fmtPct,   isPct:true  },
+  ];
+
+  function buildReportTable(yr){
+    let hdr = `<tr><th>Métrica</th>`;
+    selectedSellers.forEach(s => {
+      const c = SELLER_COLORS[s.colorIdx % SELLER_COLORS.length];
+      MONTHS.forEach(m => hdr += `<th><div style="width:8px;height:8px;border-radius:50%;background:${c.hex};display:inline-block;margin-right:4px"></div>${s.nickname}<br><small>${m}</small></th>`);
+      hdr += `<th style="background:#f0f4ff"><div style="width:8px;height:8px;border-radius:50%;background:${c.hex};display:inline-block;margin-right:4px"></div>${s.nickname}<br><small>Q1 Total</small></th>`;
+    });
+    hdr += `</tr>`;
+    let body = '';
+    metrics.forEach((m, mi) => {
+      body += `<tr style="background:${mi%2===0?'#fff':'#f9fafb'}">
+        <td style="font-weight:700;white-space:nowrap;color:#1e2e45">${m.label}</td>`;
+      selectedSellers.forEach(s => {
+        const vals = s[m.key][yr];
+        vals.forEach(v => {
+          body += `<td style="text-align:right">${v !== null ? m.fmt(v) : '<span style="color:#ccc">—</span>'}</td>`;
+        });
+        let q1;
+        if(m.isPct){
+          const valid = vals.filter(v => v !== null);
+          q1 = valid.length ? valid.reduce((a,b)=>a+b,0)/valid.length : null;
+        } else {
+          q1 = vals.reduce((a,b)=>(a||0)+(b||0), 0);
+        }
+        body += `<td style="text-align:right;font-weight:700;background:#f0f4ff">${q1 !== null ? m.fmt(q1) : '—'}</td>`;
+      });
+      body += `</tr>`;
+    });
+    return `<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:'Segoe UI',sans-serif"><thead style="background:#1e2e45;color:#fff">${hdr}</thead><tbody>${body}</tbody></table>`;
+  }
+
+  // ── Delta Q1 tabla comparativa ──
+  function buildDeltaTable(){
+    let hdr = `<tr><th>Métrica</th>`;
+    selectedSellers.forEach(s => {
+      const c = SELLER_COLORS[s.colorIdx % SELLER_COLORS.length];
+      hdr += `<th><div style="width:8px;height:8px;border-radius:50%;background:${c.hex};display:inline-block;margin-right:4px"></div>${s.nickname}<br><small>Q1 2025</small></th>
+              <th><div style="width:8px;height:8px;border-radius:50%;background:${c.hex};display:inline-block;margin-right:4px"></div>${s.nickname}<br><small>Q1 2026</small></th>
+              <th style="background:#1a3a1a;color:#4ade80"><div style="width:8px;height:8px;border-radius:50%;background:${c.hex};display:inline-block;margin-right:4px"></div>${s.nickname}<br><small>Δ%</small></th>`;
+    });
+    hdr += `</tr>`;
+    let body = '';
+    metrics.forEach((m, mi) => {
+      body += `<tr style="background:${mi%2===0?'#fff':'#f9fafb'}"><td style="font-weight:700;white-space:nowrap;color:#1e2e45">${m.label}</td>`;
+      selectedSellers.forEach(s => {
+        const getQ1 = yr => {
+          const vals = s[m.key][yr];
+          if(m.isPct){ const v = vals.filter(x=>x!==null); return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null; }
+          return vals.reduce((a,b)=>(a||0)+(b||0), 0);
+        };
+        const q25 = getQ1('2025'), q26 = getQ1('2026');
+        const delta = q25 ? ((q26-q25)/Math.abs(q25)*100) : null;
+        const dColor = delta === null ? '#666' : delta >= 0 ? '#16a34a' : '#dc2626';
+        const dText = delta === null ? '—' : `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}%`;
+        body += `<td style="text-align:right">${q25 !== null ? m.fmt(q25) : '—'}</td>
+                 <td style="text-align:right">${q26 !== null ? m.fmt(q26) : '—'}</td>
+                 <td style="text-align:right;font-weight:700;color:${dColor}">${dText}</td>`;
+      });
+      body += `</tr>`;
+    });
+    return `<table style="width:100%;border-collapse:collapse;font-size:11px;font-family:'Segoe UI',sans-serif"><thead style="background:#1e2e45;color:#fff">${hdr}</thead><tbody>${body}</tbody></table>`;
+  }
+
+  // ── Imagen de gráfico ──
+  function chartImg(id, h=300){
+    if(!charts[id]) return `<div style="height:${h}px;background:#f3f4f6;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:12px">Gráfico no disponible — abrí el tab primero</div>`;
+    return `<img src="${charts[id]}" style="width:100%;height:${h}px;object-fit:contain;border-radius:8px">`;
+  }
+
+  // ── Construir HTML del reporte ──
+  const html = `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Sellers Intelligence Report · Q1 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700;900&family=Barlow+Condensed:wght@700;800;900&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Barlow',sans-serif;background:#f2f3f5;color:#111827}
+  .page{max-width:1200px;margin:0 auto;padding:32px}
+  .cover{background:#1e2e45;color:#fff;border-radius:16px;padding:40px 48px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:flex-start}
+  .cover-title{font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;line-height:1.1}
+  .cover-badge{background:#c9b800;color:#1e2e45;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;padding:4px 12px;border-radius:6px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;display:inline-block}
+  .cover-meta{font-size:13px;opacity:.7;margin-top:8px}
+  .section{background:#fff;border-radius:12px;padding:24px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .section-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;color:#1e2e45;border-bottom:2px solid #e5e7eb;padding-bottom:10px;margin-bottom:18px;display:flex;align-items:center;gap:10px}
+  .section-title .icon{font-size:20px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+  .chart-box{background:#f9fafb;border-radius:10px;padding:16px}
+  .chart-label{font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#4b5563;margin-bottom:10px}
+  table th{padding:9px 12px;text-align:right;font-size:10px;font-weight:700;letter-spacing:.04em;white-space:nowrap;font-family:'Barlow Condensed',sans-serif}
+  table th:first-child{text-align:left}
+  table td{padding:8px 12px;border-bottom:1px solid #f3f4f6}
+  table td:first-child{position:sticky;left:0}
+  .table-scroll{overflow-x:auto;border-radius:8px;border:1px solid #e5e7eb}
+  .yr-tag{background:#1e2e45;color:#fff;font-size:11px;font-weight:700;padding:2px 9px;border-radius:5px;margin-left:8px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.06em}
+  .sellers-row{margin-bottom:20px}
+  @media print{
+    body{background:#fff}
+    .section{box-shadow:none;border:1px solid #e5e7eb}
+    .cover{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- COVER -->
+  <div class="cover">
+    <div>
+      <div class="cover-badge">Sellers Intelligence</div>
+      <div class="cover-title">Reporte Comparativo<br>Q1 2026</div>
+      <div class="cover-meta">Generado el ${date} · MercadoLibre Argentina</div>
+      <div class="sellers-row" style="margin-top:18px">${sellersList}</div>
+    </div>
+    <div style="text-align:right;opacity:.6;font-size:12px;padding-top:8px">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;opacity:.4">ML</div>
+      <div>Sellers analizados: ${selectedSellers.length}</div>
+      <div>Período: Ene / Feb / Mar</div>
+      <div>Años: 2025 · 2026</div>
+    </div>
+  </div>
+
+  <!-- RESUMEN GRÁFICO -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📊</span> Resumen — Facturación Q1 (tab activo)</div>
+    <div class="chart-box">
+      <div class="chart-label">Facturación Q1 2025 vs 2026 por seller</div>
+      ${chartImg('chart-resumen', 340)}
+    </div>
+  </div>
+
+  <!-- FACTURACIÓN -->
+  <div class="section">
+    <div class="section-title"><span class="icon">💰</span> Facturación mensual <span class="yr-tag">2026</span></div>
+    <div class="chart-box" style="margin-bottom:16px">
+      <div class="chart-label">Evolución Ene / Feb / Mar</div>
+      ${chartImg('chart-fact-line', 280)}
+    </div>
+    <div class="chart-label" style="margin-bottom:8px;font-family:\'Barlow Condensed\',sans-serif;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#4b5563">Datos 2026</div>
+    <div class="table-scroll">${buildReportTable('2026')}</div>
+    <div class="chart-label" style="margin:16px 0 8px;font-family:\'Barlow Condensed\',sans-serif;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:#4b5563">Datos 2025</div>
+    <div class="table-scroll">${buildReportTable('2025')}</div>
+  </div>
+
+  <!-- COMPARATIVA YoY -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📈</span> Comparativa Q1 — 2025 vs 2026 (Δ%)</div>
+    <div class="table-scroll">${buildDeltaTable()}</div>
+  </div>
+
+  <!-- UNIDADES -->
+  <div class="section">
+    <div class="section-title"><span class="icon">📦</span> Unidades vendidas & Precio promedio</div>
+    <div class="grid2">
+      <div class="chart-box">
+        <div class="chart-label">Unidades vendidas</div>
+        ${chartImg('chart-units-line', 240)}
+      </div>
+      <div class="chart-box">
+        <div class="chart-label">Precio promedio</div>
+        ${chartImg('chart-pp-line', 240)}
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGÍSTICA -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🚚</span> Logística — FULL / FLEX / ME1 / ME2</div>
+    <div class="grid2">
+      <div class="chart-box">
+        <div class="chart-label">%FULL</div>
+        ${chartImg('chart-full', 220)}
+      </div>
+      <div class="chart-box">
+        <div class="chart-label">%FLEX</div>
+        ${chartImg('chart-flex', 220)}
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="chart-box">
+        <div class="chart-label">%ME1</div>
+        ${chartImg('chart-me1', 220)}
+      </div>
+      <div class="chart-box">
+        <div class="chart-label">%ME2</div>
+        ${chartImg('chart-me2', 220)}
+      </div>
+    </div>
+  </div>
+
+  <!-- COMERCIAL -->
+  <div class="section">
+    <div class="section-title"><span class="icon">🎯</span> Comercial — Ofertas / Cuotas / PADS / Buy Box</div>
+    <div class="grid2">
+      <div class="chart-box">
+        <div class="chart-label">%OFERTAS</div>
+        ${chartImg('chart-ofertas', 220)}
+      </div>
+      <div class="chart-box">
+        <div class="chart-label">%CUOTAS SIN INTERÉS</div>
+        ${chartImg('chart-cuotas', 220)}
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="chart-box">
+        <div class="chart-label">%PADS</div>
+        ${chartImg('chart-pads', 220)}
+      </div>
+      <div class="chart-box">
+        <div class="chart-label">%BUY BOX</div>
+        ${chartImg('chart-buybox', 220)}
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:20px;font-size:11px;color:#9ca3af">
+    Sellers Intelligence · MercadoLibre Argentina · ${date}
+  </div>
+</div>
+</body>
+</html>`;
+
+  // Descargar como .html
+  const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Sellers_Reporte_${new Date().toISOString().slice(0,10)}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ Reporte exportado — abrilo en el navegador para imprimir a PDF');
+}
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>
